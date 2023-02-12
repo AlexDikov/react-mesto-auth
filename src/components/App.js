@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Routes, Route } from "react-router-dom";
 import Header from "./Header";
 import Main from "./Main";
 import Footer from "./Footer";
@@ -9,6 +10,9 @@ import { api } from "../utils/api";
 import EditProfilePopup from "./EditProfilePopup";
 import EditAvatarPopup from "./EditAvatarPopup";
 import AddPlacePopup from "./AddPlacePopup";
+import Login from "./Login";
+import Register from "./Register";
+import ProtectedRoute from "./ProtectedRoute";
 
 export default function App() {
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
@@ -17,6 +21,7 @@ export default function App() {
   const [selectedCard, setSelectedCard] = useState(null);
   const [currentUser, setCurrentUser] = useState({});
   const [cards, setCards] = useState([]);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
     api
@@ -123,18 +128,31 @@ export default function App() {
     handleCloseAllPopups();
   }
 
+  const baseUrl = "https://auth.nomoreparties.co";
+
   return (
     <CurrentUserContext.Provider value={currentUser}>
       <Header />
-      <Main
-        onEditProfile={handleEditProfileClick}
-        onAddPlace={handleAddPlaceClick}
-        onEditAvatar={handleEditAvatarClick}
-        onCardClick={handleCardClick}
-        onCardLike={handleCardLike}
-        onCardDelete={handleCardDelete}
-        cards={cards}
-      />
+      <Routes>
+        <Route path="/signin" element={<Login baseUrl={baseUrl} />} />
+        <Route path="/signup" element={<Register baseUrl={baseUrl} />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute isLoggedIn={loggedIn}>
+              <Main
+                onEditProfile={handleEditProfileClick}
+                onAddPlace={handleAddPlaceClick}
+                onEditAvatar={handleEditAvatarClick}
+                onCardClick={handleCardClick}
+                onCardLike={handleCardLike}
+                onCardDelete={handleCardDelete}
+                cards={cards}
+              />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
       <Footer />
       <EditProfilePopup
         isOpen={isEditProfilePopupOpen}
