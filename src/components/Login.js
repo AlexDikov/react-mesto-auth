@@ -3,14 +3,6 @@ import { useState } from "react";
 export default function Login(props) {
   const [formValue, setFormValue] = useState({ email: "", password: "" });
 
-  const login = (email, password) => {
-    fetch(`${props.baseUrl}/signin`, {
-      method: "POST",
-      headers: { "Content-Type": "aplication/json" },
-      body: JSON.stringify({ email, password }),
-    });
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormValue({ ...formValue, [name]: value });
@@ -19,7 +11,7 @@ export default function Login(props) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const { email, password } = formValue;
-    login(email, password);
+    props.onLogin(email, password);
   };
 
   return (

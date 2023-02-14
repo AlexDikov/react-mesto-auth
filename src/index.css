@@ -50,3 +50,7 @@
 @import url(./blocks/login/__save-button/login__save-button_inactive.css);
 @import url(./blocks/login/__title/login__title.css);
 @import url(./blocks/login/__btn/login__btn.css);
+@import url(./blocks/header/__profile/header__profile.css);
+@import url(./blocks/header/__email/header__email.css);
+@import url(./blocks/popup/__icon/popup__icon.css);
+@import url(./blocks/popup/__aware/popup__aware.css);

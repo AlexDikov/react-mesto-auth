@@ -1,11 +1,15 @@
-import accept from "../images/deny.svg";
+import deny from "../images/deny.svg";
+import accept from "../images/accept.svg";
 
-export default function InfoTooltip() {
+export default function InfoTooltip(props) {
   return (
-    <div className="popup popup_opened">
+    <div className={`popup ${props.isOpen && "popup_opened"}`}>
       <div className="popup__container">
-        <img src="" />
-        <h2 className="popup__title">{props.title}</h2>
+        <img className="popup__icon" src={props.isRegistered ? accept : deny} />
+        <h2 className="popup__title popup__aware">
+          {props.isRegistered ? "Вы успешно зарегистрировались!" : "Что-то пошло не так! Попробуйте еще раз."}
+        </h2>
+        <button className="popup__close-button" onClick={props.onClose} type="button" aria-label="закрыть"></button>
       </div>
     </div>
   );

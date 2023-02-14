@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Register(props) {
   const [formValue, setFormValue] = useState({ email: "", password: "" });
-
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -14,26 +12,7 @@ export default function Register(props) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const { password, email } = formValue;
-    register({ password, email })
-      .then((res) => {
-        navigate("/signin", { replace: true });
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-
-  const register = ({ password, email }) => {
-    return fetch(`${props.baseUrl}/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password, email }),
-    }).then((res) => {
-      if (res.ok) {
-        return res.json();
-      }
-      return Promise.reject(`Ошибка: ${res.status}`);
-    });
+    props.onRegister({ password, email });
   };
 
   return (
@@ -70,7 +49,10 @@ export default function Register(props) {
           </button>
         </form>
         <p style={{ fontSize: 14, marginLeft: 105 }}>
-          Уже зарегистрированы? <button className="login__btn">Войти</button>
+          Уже зарегистрированы?{" "}
+          <Link className="login__btn" to="/signin">
+            Войти
+          </Link>
         </p>
       </div>
     </div>

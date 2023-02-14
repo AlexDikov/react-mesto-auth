@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import Header from "./Header";
 import Main from "./Main";
 import Footer from "./Footer";
@@ -13,15 +13,21 @@ import AddPlacePopup from "./AddPlacePopup";
 import Login from "./Login";
 import Register from "./Register";
 import ProtectedRoute from "./ProtectedRoute";
+import InfoTooltip from "./InfoTooltip";
 
 export default function App() {
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
+  const [isInfoTooltipOpen, setIsInfoTooltipOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const [currentUser, setCurrentUser] = useState({});
   const [cards, setCards] = useState([]);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [email, setEmail] = useState("");
+  const [registered, setRegistered] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     api
@@ -63,6 +69,7 @@ export default function App() {
     setIsAddPlacePopupOpen(false);
     setIsEditAvatarPopupOpen(false);
     setSelectedCard(null);
+    setIsInfoTooltipOpen(false);
   }
 
   function handleCardLike(card) {
@@ -130,12 +137,89 @@ export default function App() {
 
   const baseUrl = "https://auth.nomoreparties.co";
 
+  useEffect(() => checkToken(), []);
+
+  const checkToken = () => {
+    fetch(`${baseUrl}/users/me`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
+      .then((res) => {
+        if (res.ok) {
+          setLoggedIn(true);
+          navigate("/", { replace: true });
+        } else {
+          return Promise.reject(`Ошибка: ${res.status}`);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const register = ({ password, email }) => {
+    return fetch(`${baseUrl}/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password, email }),
+    })
+      .then((res) => {
+        if (res.ok) {
+          setIsInfoTooltipOpen(true);
+          setRegistered(true);
+          return res.json();
+        }
+        setIsInfoTooltipOpen(true);
+        setRegistered(false);
+        return Promise.reject(`Ошибка: ${res.status}`);
+      })
+      .then((res) => {
+        navigate("/signin", { replace: true });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const login = (email, password) => {
+    fetch(`${baseUrl}/signin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    })
+      .then((res) => {
+        if (res.ok) {
+          setEmail(email);
+          return res.json();
+        }
+        return Promise.reject(`Ошибка: ${res.status}`);
+      })
+      .then((data) => {
+        localStorage.setItem("token", data.token);
+      })
+      .then(() => {
+        navigate("/", { replace: true });
+        setLoggedIn(true);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const signOut = () => {
+    localStorage.removeItem("token");
+    setLoggedIn(false);
+    navigate("/signin", { replace: true });
+  };
+
   return (
     <CurrentUserContext.Provider value={currentUser}>
-      <Header />
+      <Header isLoggedIn={loggedIn} onSignOut={signOut} email={email} />
       <Routes>
-        <Route path="/signin" element={<Login baseUrl={baseUrl} />} />
-        <Route path="/signup" element={<Register baseUrl={baseUrl} />} />
+        <Route path="/signin" element={<Login baseUrl={baseUrl} onLogin={login} isLoggedIn={setLoggedIn} />} />
+        <Route path="/signup" element={<Register baseUrl={baseUrl} onRegister={register} />} />
         <Route
           path="/"
           element={
@@ -170,6 +254,7 @@ export default function App() {
           Да
         </button>
       </PopupWithForm>
+      <InfoTooltip isRegistered={registered} isOpen={isInfoTooltipOpen} onClose={handleCloseAllPopups} />
       {selectedCard && <ImagePopup card={selectedCard} onClose={handleCloseAllPopups} />}
     </CurrentUserContext.Provider>
   );
