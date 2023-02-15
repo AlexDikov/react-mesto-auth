@@ -14,6 +14,7 @@ import Login from "./Login";
 import Register from "./Register";
 import ProtectedRoute from "./ProtectedRoute";
 import InfoTooltip from "./InfoTooltip";
+import { checkToken, register, login } from "../utils/auth";
 
 export default function App() {
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
@@ -25,28 +26,30 @@ export default function App() {
   const [cards, setCards] = useState([]);
   const [loggedIn, setLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
-  const [registered, setRegistered] = useState("");
+  const [registered, setRegistered] = useState(false);
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    api
-      .getProfile()
-      .then((data) => {
-        setCurrentUser(data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-    api
-      .getInitialCards()
-      .then((data) => {
-        setCards(data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, []);
+    if (loggedIn) {
+      api
+        .getProfile()
+        .then((data) => {
+          setCurrentUser(data);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      api
+        .getInitialCards()
+        .then((data) => {
+          setCards(data);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }, [loggedIn]);
 
   function handleEditProfileClick() {
     setIsEditProfilePopupOpen(true);
@@ -105,10 +108,12 @@ export default function App() {
       .then((data) => {
         setCurrentUser(data);
       })
+      .then(() => {
+        handleCloseAllPopups();
+      })
       .catch((err) => {
         console.log(err);
       });
-    handleCloseAllPopups();
   }
 
   function handleUpdateAvatar(data) {
@@ -117,10 +122,12 @@ export default function App() {
       .then((data) => {
         setCurrentUser(data);
       })
+      .then(() => {
+        handleCloseAllPopups();
+      })
       .catch((err) => {
         console.log(err);
       });
-    handleCloseAllPopups();
   }
 
   function handleAddPlaceSubmit(data) {
@@ -129,23 +136,16 @@ export default function App() {
       .then((newCard) => {
         setCards([newCard, ...cards]);
       })
+      .then(() => {
+        handleCloseAllPopups();
+      })
       .catch((err) => {
         console.log(err);
       });
-    handleCloseAllPopups();
   }
 
-  const baseUrl = "https://auth.nomoreparties.co";
-
-  useEffect(() => checkToken(), []);
-
-  const checkToken = () => {
-    fetch(`${baseUrl}/users/me`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    })
+  useEffect(() => {
+    checkToken()
       .then((res) => {
         if (res.ok) {
           setLoggedIn(true);
@@ -157,56 +157,7 @@ export default function App() {
       .catch((err) => {
         console.log(err);
       });
-  };
-
-  const register = ({ password, email }) => {
-    return fetch(`${baseUrl}/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password, email }),
-    })
-      .then((res) => {
-        if (res.ok) {
-          setIsInfoTooltipOpen(true);
-          setRegistered(true);
-          return res.json();
-        }
-        setIsInfoTooltipOpen(true);
-        setRegistered(false);
-        return Promise.reject(`Ошибка: ${res.status}`);
-      })
-      .then((res) => {
-        navigate("/signin", { replace: true });
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-
-  const login = (email, password) => {
-    fetch(`${baseUrl}/signin`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
-      .then((res) => {
-        if (res.ok) {
-          setEmail(email);
-          return res.json();
-        }
-        return Promise.reject(`Ошибка: ${res.status}`);
-      })
-      .then((data) => {
-        localStorage.setItem("token", data.token);
-      })
-      .then(() => {
-        navigate("/", { replace: true });
-        setLoggedIn(true);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+  }, []);
 
   const signOut = () => {
     localStorage.removeItem("token");
@@ -218,8 +169,13 @@ export default function App() {
     <CurrentUserContext.Provider value={currentUser}>
       <Header isLoggedIn={loggedIn} onSignOut={signOut} email={email} />
       <Routes>
-        <Route path="/signin" element={<Login baseUrl={baseUrl} onLogin={login} isLoggedIn={setLoggedIn} />} />
-        <Route path="/signup" element={<Register baseUrl={baseUrl} onRegister={register} />} />
+        <Route path="/signin" element={<Login onLogin={login} onEmail={setEmail} onLoggedIn={setLoggedIn} />} />
+        <Route
+          path="/signup"
+          element={
+            <Register onRegister={register} onInfoTooltipOpen={setIsInfoTooltipOpen} onRegistered={setRegistered} />
+          }
+        />
         <Route
           path="/"
           element={
@@ -254,7 +210,13 @@ export default function App() {
           Да
         </button>
       </PopupWithForm>
-      <InfoTooltip isRegistered={registered} isOpen={isInfoTooltipOpen} onClose={handleCloseAllPopups} />
+      <InfoTooltip
+        isRegistered={registered}
+        isOpen={isInfoTooltipOpen}
+        onClose={handleCloseAllPopups}
+        success={"Вы успешно зарегистрировались!"}
+        fail={"Что-то пошло не так! Попробуйте еще раз."}
+      />
       {selectedCard && <ImagePopup card={selectedCard} onClose={handleCloseAllPopups} />}
     </CurrentUserContext.Provider>
   );

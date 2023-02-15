@@ -1,7 +1,11 @@
 import { useState } from "react";
+import { login } from "../utils/auth";
+import { useNavigate } from "react-router-dom";
 
 export default function Login(props) {
   const [formValue, setFormValue] = useState({ email: "", password: "" });
+
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -11,7 +15,24 @@ export default function Login(props) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const { email, password } = formValue;
-    props.onLogin(email, password);
+    login(email, password)
+      .then((res) => {
+        if (res.ok) {
+          props.onEmail(email);
+          return res.json();
+        }
+        return Promise.reject(`Ошибка: ${res.status}`);
+      })
+      .then((data) => {
+        localStorage.setItem("token", data.token);
+      })
+      .then(() => {
+        navigate("/", { replace: true });
+        props.onLoggedIn(true);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   return (

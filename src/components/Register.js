@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { register } from "../utils/auth";
 
 export default function Register(props) {
   const [formValue, setFormValue] = useState({ email: "", password: "" });
+
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -12,7 +15,23 @@ export default function Register(props) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const { password, email } = formValue;
-    props.onRegister({ password, email });
+    register(password, email)
+      .then((res) => {
+        if (res.ok) {
+          props.onInfoTooltipOpen(true);
+          props.onRegistered(true);
+          return res.json();
+        }
+        props.onInfoTooltipOpen(true);
+        props.onRegistered(false);
+        return Promise.reject(`Ошибка: ${res.status}`);
+      })
+      .then(() => {
+        navigate("/signin", { replace: true });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   return (
