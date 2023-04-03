@@ -32,10 +32,12 @@ export default function App() {
 
   useEffect(() => {
     if (loggedIn) {
+      debugger
       api
         .getProfile()
         .then((data) => {
-          setCurrentUser(data);
+          const {name, about, avatar, _id, email} = data;
+          setCurrentUser({name, about, avatar, _id, email});
         })
         .catch((err) => {
           console.log(err);
@@ -76,7 +78,7 @@ export default function App() {
   }
 
   function handleCardLike(card) {
-    const isLiked = card.likes.some((i) => i._id === currentUser._id);
+    const isLiked = card.likes.some((i) => i === currentUser._id);
 
     api
       .changeLikeCardStatus(card._id, isLiked)
@@ -89,7 +91,7 @@ export default function App() {
   }
 
   function handleCardDelete(card) {
-    const isOwn = card.owner._id === currentUser._id;
+    const isOwn = card.owner === currentUser._id;
 
     api
       .removeCard(card._id, isOwn)
@@ -120,7 +122,8 @@ export default function App() {
     api
       .editAvatar(data)
       .then((data) => {
-        setCurrentUser(data);
+        const {data: {name, about, avatar, _id}} = data;
+          setCurrentUser({name, about, avatar, _id});
       })
       .then(() => {
         handleCloseAllPopups();
@@ -157,7 +160,7 @@ export default function App() {
       .catch((err) => {
         console.log(err);
       });
-  }, []);
+  }, [navigate]);
 
   const signOut = () => {
     localStorage.removeItem("token");
@@ -167,7 +170,7 @@ export default function App() {
 
   return (
     <CurrentUserContext.Provider value={currentUser}>
-      <Header isLoggedIn={loggedIn} onSignOut={signOut} email={email} />
+      <Header isLoggedIn={loggedIn} onSignOut={signOut} />
       <Routes>
         <Route path="/signin" element={<Login onLogin={login} onEmail={setEmail} onLoggedIn={setLoggedIn} />} />
         <Route

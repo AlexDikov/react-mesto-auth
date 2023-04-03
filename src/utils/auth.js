@@ -1,4 +1,4 @@
-const baseUrl = "https://auth.nomoreparties.co";
+const baseUrl = "http://localhost:3001";
 
 export const checkToken = () => {
   return fetch(`${baseUrl}/users/me`, {

@@ -25,10 +25,11 @@ export default function Login(props) {
       })
       .then((data) => {
         localStorage.setItem("token", data.token);
+        debugger
       })
       .then(() => {
-        navigate("/", { replace: true });
         props.onLoggedIn(true);
+        navigate("/", { replace: true });
       })
       .catch((err) => {
         console.log(err);
